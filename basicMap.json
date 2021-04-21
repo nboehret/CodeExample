@@ -1,0 +1,1 @@
+{"Rooms":[{"RoomId":1,"StartingRoom":true,"EndingRoom":false,"Doors":[{"DoorColor":"faded brown","ConnectsToRoomId":2}],"RoomDesc":"You are in a poorly lit room with walls of crude brick."},{"RoomId":2,"StartingRoom":false,"EndingRoom":true,"Doors":null,"RoomDesc":"You step out of the cave and into the light. You made it out."}]}

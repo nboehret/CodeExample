@@ -30,7 +30,7 @@ namespace CodeExample
             PlayLoop();
         }
 
-        public void PlayLoop()
+        void PlayLoop()
         {
             bool exit = false;
             while (exit == false)
@@ -40,13 +40,15 @@ namespace CodeExample
                     Console.WriteLine("Error with room or map");
                     return;
                 }
+
+                Console.WriteLine(_currentRoom.RoomDesc);
+
                 if (_currentRoom.EndingRoom == true)
                 {
                     Console.WriteLine("!!! YOU WIN !!!");
                     return;
                 }
 
-                Console.WriteLine(_currentRoom.RoomDesc);
                 Console.WriteLine(DoorChoices() + "\n");
                 Console.Write("What number door will you take: ");
                 string input = Console.ReadLine();
@@ -68,7 +70,7 @@ namespace CodeExample
             }
         }
 
-        public string DoorChoices()
+        string DoorChoices()
         {
             string ret = "You see ";
 
@@ -88,7 +90,7 @@ namespace CodeExample
                 {
                     ret += " and ";
                 }
-                ret += $"a {door.DoorColor} [{++doorNum}]";
+                ret += $"a {door.DoorColor} [{++doorNum}] door";
             }
             ret += ".";
 
@@ -124,7 +126,7 @@ namespace CodeExample
 
         // Loads the Map from the mapFile location
         // Returns true if the map loaded successfully
-        public bool LoadMap(string mapFile)
+        bool LoadMap(string mapFile)
         {
             //Console.WriteLine($"Looking for {mapFile}");
             if (File.Exists(mapFile) == true)
@@ -142,7 +144,7 @@ namespace CodeExample
 
         // Vakudates the loaded map, it must have one entrance and at least one exit and there is a path to from the start to end
         // Returns true if map validation was successful
-        public bool ValidateMap()
+        bool ValidateMap()
         {
             if (_map == null)
             {
@@ -177,7 +179,8 @@ namespace CodeExample
             }
 
             // check if you can get from the start to the exit
-            bool canExit = ValidateExitRecursive(_currentRoom, 0);
+            List<int> visitedRooms = new List<int>();
+            bool canExit = ValidateExitRecursive(_currentRoom, ref visitedRooms, 0);
 
             if (canExit == false)
             {
@@ -188,9 +191,11 @@ namespace CodeExample
             return true;
         }
 
-        bool ValidateExitRecursive(Room room, int depth)
+        bool ValidateExitRecursive(Room room, ref List<int> visitedRooms, int depth)
         {
             bool foundExit = false;
+
+            visitedRooms.Add(room.RoomId);
 
             if (room.EndingRoom == true)
             {
@@ -200,16 +205,20 @@ namespace CodeExample
             {
                 foreach (Door door in room.Doors)
                 {
-                    // this checks if a room exists and then passes that connecting room for the next level of search
-                    Room nextRoom = _map.Rooms.FirstOrDefault(x => x.RoomId == door.ConnectsToRoomId);
-                    if (nextRoom != null)
+                    // see if we have already been there, if not continue
+                    if (visitedRooms.Contains(door.ConnectsToRoomId) == false)
                     {
-                        foundExit = ValidateExitRecursive(nextRoom, depth + 1);
-                    }
+                        // this checks if a room exists and then passes that connecting room for the next level of search
+                        Room nextRoom = _map.Rooms.FirstOrDefault(x => x.RoomId == door.ConnectsToRoomId);
+                        if (nextRoom != null)
+                        {
+                            foundExit = ValidateExitRecursive(nextRoom, ref visitedRooms, depth + 1);
+                        }
 
-                    if (foundExit == true)
-                    {
-                        return foundExit;
+                        if (foundExit == true)
+                        {
+                            return foundExit;
+                        }
                     }
                 }
             }
@@ -217,13 +226,30 @@ namespace CodeExample
             return foundExit;
         }
 
-        public void CreateBasicMap()
+        void CreateBasicMap()
         {
             Door d1 = new Door() { DoorColor = "faded brown", ConnectsToRoomId = 2 };
             Room r1 = new Room() { RoomId = 1, StartingRoom = true, EndingRoom = false, RoomDesc = "You are in a poorly lit room with walls of crude brick.", Doors = new List<Door> { d1 } };
             Room r2 = new Room() { RoomId = 2, StartingRoom = false, EndingRoom = true, RoomDesc = "You step out of the cave and into the light. You made it out." };
 
             Map m = new Map() {Rooms = new List<Room> {r1, r2}};
+
+            File.WriteAllText("map.json", JsonSerializer.Serialize<Map>(m));
+        }
+
+        void CreateMap()
+        {
+            Door d_r1_r2 = new Door() { DoorColor = "faded brown", ConnectsToRoomId = 2 };
+            Door d_r2_r1 = new Door() { DoorColor = "faded brown", ConnectsToRoomId = 1 };
+            Door d_r1_r3 = new Door() { DoorColor = "rusty iron", ConnectsToRoomId = 3 };
+            Door d_r3_r1 = new Door() { DoorColor = "rusty iron", ConnectsToRoomId = 1 };
+            Door d_r3_r4 = new Door() { DoorColor = "cracked wooden", ConnectsToRoomId = 4};
+            Room r1 = new Room() { RoomId = 1, StartingRoom = true, EndingRoom = false, RoomDesc = "You are in a poorly lit room with walls of crude brick.", Doors = new List<Door> { d_r1_r2, d_r1_r3 } };
+            Room r2 = new Room() { RoomId = 2, StartingRoom = false, EndingRoom = false, RoomDesc = "You are in a carved out room. A campfire is begining to go out in the middle of the room.", Doors = new List<Door> { d_r2_r1 } };
+            Room r3 = new Room() { RoomId = 3, StartingRoom = false, EndingRoom = false, RoomDesc = "You are in a room with planks of wood lining the walls keeping back the dirt and rock that is pushing its way in.", Doors = new List<Door> { d_r3_r1, d_r3_r4 } };
+            Room r4 = new Room() { RoomId = 4, StartingRoom = false, EndingRoom = true, RoomDesc = "You step out of the cave and into the light. You made it out." };
+
+            Map m = new Map() {Rooms = new List<Room> {r1, r2, r3, r4}};
 
             File.WriteAllText("map.json", JsonSerializer.Serialize<Map>(m));
         }
