@@ -27,7 +27,99 @@ namespace CodeExample
             bool mapValid = ValidateMap();
             if (mapValid == false) { return; }
 
+            PlayLoop();
+        }
 
+        public void PlayLoop()
+        {
+            bool exit = false;
+            while (exit == false)
+            {
+                if (_currentRoom == null || _map == null)
+                {
+                    Console.WriteLine("Error with room or map");
+                    return;
+                }
+                if (_currentRoom.EndingRoom == true)
+                {
+                    Console.WriteLine("!!! YOU WIN !!!");
+                    return;
+                }
+
+                Console.WriteLine(_currentRoom.RoomDesc);
+                Console.WriteLine(DoorChoices() + "\n");
+                Console.Write("What number door will you take: ");
+                string input = Console.ReadLine();
+                if (input.ToLower() == "e" || input.ToLower() == "exit")
+                {
+                    exit = true;
+                }
+                else
+                {
+                    int doorChoice = ValidateDoorChoice(input);
+                    if (doorChoice != -1)
+                    {
+                        doorChoice--; // to move it to the index of the door not the number displayed to the user
+                        Door selectedDoor = _currentRoom.Doors[doorChoice];
+                        Console.WriteLine($"You go through the {selectedDoor.DoorColor} door.");
+                        _currentRoom = _map.Rooms.FirstOrDefault(x => x.RoomId == selectedDoor.ConnectsToRoomId);
+                    }
+                }
+            }
+        }
+
+        public string DoorChoices()
+        {
+            string ret = "You see ";
+
+            if (_currentRoom.Doors.Count > 1)
+            {
+                ret += "some doors. There is ";
+            }
+            else
+            {
+                ret += "a door. It is ";
+            }
+
+            int doorNum = 0;
+            foreach (Door door in _currentRoom.Doors)
+            {
+                if (doorNum > 0)
+                {
+                    ret += " and ";
+                }
+                ret += $"a {door.DoorColor} [{++doorNum}]";
+            }
+            ret += ".";
+
+            return ret;
+        }
+
+        // Validates that the user inputs a number and that the number is of a door in the room
+        // Returns the door number inputted by the user
+        // Will return -1 if not a valid door
+        int ValidateDoorChoice(string userInput)
+        {
+            int ret = -1;
+            bool isNumber = int.TryParse(userInput, out ret);
+            if (isNumber == false)
+            {
+                Console.WriteLine("Please input a number of a valid door.");
+            }
+            else
+            {
+                if (ret > 0 && ret <= _currentRoom.Doors.Count)
+                {
+                    // good to go
+                }
+                else
+                {
+                    ret = -1;
+                    Console.WriteLine("Please input a number of a valid door.");
+                }
+            }
+
+            return ret;
         }
 
         // Loads the Map from the mapFile location
@@ -134,15 +226,6 @@ namespace CodeExample
             Map m = new Map() {Rooms = new List<Room> {r1, r2}};
 
             File.WriteAllText("map.json", JsonSerializer.Serialize<Map>(m));
-        }
-
-        public void PlayLoop()
-        {
-            bool exit = false;
-            while (exit == false)
-            {
-                
-            }
         }
     }
 
