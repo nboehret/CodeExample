@@ -68,7 +68,7 @@ namespace CodeExample
             }
         }
 
-        // Vakudates the loaded map, it must have one entrance and at least one exit and there is a path to from the start to end
+        // Validates the loaded map, it must have one entrance and at least one exit and there is a path to from the start to end
         // Returns true if map validation was successful
         bool ValidateMap()
         {
